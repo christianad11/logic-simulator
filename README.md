@@ -53,12 +53,6 @@ A 6-layer walkthrough of how computers work from the ground up:
 
 ---
 
-## Screenshots
-
-> *(Add screenshots here after deploying — drag images into the GitHub editor or place them in a `screenshots/` folder)*
-
----
-
 ## Running Locally
 
 No build step, no dependencies — just open the HTML files directly in a browser.
