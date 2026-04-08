@@ -4,7 +4,9 @@ An interactive browser-based educational tool for learning digital logic — fro
 
 Built as a personal project to consolidate concepts from Electronics, Logic Design, and Digital Electronics coursework.
 
-**[Live Demo →](https://christianad11.github.io/logic-simulator)**
+**[Circuit Simulator Demo →](https://christianad11.github.io/logic-simulator)**
+
+**[Full Simulation Demo →](https://christianad11.github.io/logic-simulator/full-simulator)**
 
 ---
 
