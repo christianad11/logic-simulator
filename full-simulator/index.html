@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>From Silicon to Code</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <header id="main-header">
+    <div class="header-left">
+      <h1>From Silicon to Code</h1>
+      <p class="subtitle">Interactive Computing Abstraction Layers</p>
+    </div>
+    <div class="header-right">
+      <a href="../index.html" class="back-link">← Logic Simulator</a>
+    </div>
+  </header>
+
+  <!-- Layer Navigation -->
+  <nav id="layer-nav">
+    <div class="layer-nav-track">
+      <button class="layer-nav-btn active" data-layer="1">
+        <span class="layer-num">1</span>
+        <span class="layer-label">Semiconductor</span>
+      </button>
+      <span class="layer-nav-arrow">→</span>
+      <button class="layer-nav-btn" data-layer="2">
+        <span class="layer-num">2</span>
+        <span class="layer-label">Transistor</span>
+      </button>
+      <span class="layer-nav-arrow">→</span>
+      <button class="layer-nav-btn" data-layer="3">
+        <span class="layer-num">3</span>
+        <span class="layer-label">Logic Gates</span>
+      </button>
+      <span class="layer-nav-arrow">→</span>
+      <button class="layer-nav-btn" data-layer="4">
+        <span class="layer-num">4</span>
+        <span class="layer-label">Circuits</span>
+      </button>
+      <span class="layer-nav-arrow">→</span>
+      <button class="layer-nav-btn" data-layer="5">
+        <span class="layer-num">5</span>
+        <span class="layer-label">CPU</span>
+      </button>
+      <span class="layer-nav-arrow">→</span>
+      <button class="layer-nav-btn" data-layer="6">
+        <span class="layer-num">6</span>
+        <span class="layer-label">Execution</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main id="workspace">
+
+    <!-- Layer 1: Semiconductor Physics -->
+    <section id="layer-1" class="layer-section active" data-layer="1">
+      <div class="layer-layout">
+        <div class="layer-canvas-area">
+          <div class="canvas-label">Semiconductor Physics — P/N Junction</div>
+          <canvas id="physics-canvas"></canvas>
+        </div>
+        <div class="layer-controls-area">
+          <div class="control-card" id="physics-controls">
+            <h3>Controls</h3>
+            <div class="control-row">
+              <label class="control-label">Bias Voltage</label>
+              <input type="range" id="physics-voltage" min="-30" max="30" value="0" class="slider">
+              <span id="physics-voltage-val" class="val-badge">0.0 V</span>
+            </div>
+            <div class="control-row">
+              <label class="control-label">Show Field Lines</label>
+              <button id="physics-fieldlines" class="toggle-btn active">ON</button>
+            </div>
+            <div class="control-row">
+              <button id="physics-reset" class="action-btn">Reset</button>
+            </div>
+          </div>
+          <div class="control-card" id="physics-legend">
+            <h3>Legend</h3>
+            <div class="legend-row"><span class="legend-dot" style="background:#60a5fa"></span> Electron (e⁻)</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#f87171"></span> Hole (h⁺)</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#7c3aed"></span> Depletion Zone</div>
+            <div class="legend-row"><span class="legend-dot" style="background:#fbbf24"></span> Current Flow</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layer 2: Transistor -->
+    <section id="layer-2" class="layer-section" data-layer="2">
+      <div class="layer-layout">
+        <div class="layer-canvas-area">
+          <div class="canvas-label">N-Channel MOSFET Cross-Section</div>
+          <svg id="transistor-svg" viewBox="0 0 620 400" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="layer-controls-area">
+          <div class="control-card" id="transistor-controls">
+            <h3>Gate Control</h3>
+            <div class="control-row">
+              <label class="control-label">Gate Voltage</label>
+              <div class="btn-group">
+                <button id="transistor-low" class="gate-btn active">LOW (0V)</button>
+                <button id="transistor-high" class="gate-btn">HIGH (3V)</button>
+              </div>
+            </div>
+            <div class="control-row">
+              <label class="control-label">Vgs =</label>
+              <span id="transistor-vgs" class="val-badge">0.0 V</span>
+            </div>
+            <div class="control-row">
+              <label class="control-label">Status</label>
+              <span id="transistor-status" class="status-badge off">OFF</span>
+            </div>
+            <div class="control-row">
+              <label class="control-label">Show Depletion</label>
+              <button id="transistor-depletion" class="toggle-btn active">ON</button>
+            </div>
+          </div>
+          <div class="control-card">
+            <h3>MOSFET Symbol</h3>
+            <svg id="mosfet-symbol-svg" viewBox="0 0 160 140" style="width:100%;height:140px"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layer 3: Logic Gates -->
+    <section id="layer-3" class="layer-section" data-layer="3">
+      <div class="layer-layout">
+        <div class="layer-canvas-area">
+          <div class="sublayer-tabs" id="gates-tabs">
+            <button class="sublayer-tab active" data-gate="NOT">NOT Gate</button>
+            <button class="sublayer-tab" data-gate="AND">AND Gate</button>
+            <button class="sublayer-tab" data-gate="OR">OR Gate</button>
+          </div>
+          <svg id="gates-svg" viewBox="0 0 700 380" preserveAspectRatio="xMidYMid meet" style="flex:1"></svg>
+          <div id="gates-truth-table" class="embedded-truth-table"></div>
+        </div>
+        <div class="layer-controls-area">
+          <div class="control-card" id="gates-controls">
+            <h3>Inputs</h3>
+            <div class="control-row">
+              <label class="control-label">Input A</label>
+              <div class="btn-group">
+                <button class="input-btn active" data-input="A" data-val="0">0</button>
+                <button class="input-btn" data-input="A" data-val="1">1</button>
+              </div>
+            </div>
+            <div class="control-row" id="input-b-row">
+              <label class="control-label">Input B</label>
+              <div class="btn-group">
+                <button class="input-btn active" data-input="B" data-val="0">0</button>
+                <button class="input-btn" data-input="B" data-val="1">1</button>
+              </div>
+            </div>
+            <div class="control-row">
+              <label class="control-label">Output</label>
+              <span id="gates-output" class="val-badge">—</span>
+            </div>
+          </div>
+          <div class="control-card" id="gates-info-card">
+            <h3>Gate Info</h3>
+            <div id="gates-description" class="info-body"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layer 4: Combinational Circuits -->
+    <section id="layer-4" class="layer-section" data-layer="4">
+      <div class="layer-layout">
+        <div class="layer-canvas-area">
+          <div class="sublayer-tabs" id="circuits-tabs">
+            <button class="sublayer-tab active" data-circuit="half-adder">Half Adder</button>
+            <button class="sublayer-tab" data-circuit="full-adder">Full Adder</button>
+            <button class="sublayer-tab" data-circuit="mux">2:1 MUX</button>
+          </div>
+          <svg id="circuits-svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet" style="flex:1"></svg>
+        </div>
+        <div class="layer-controls-area">
+          <div class="control-card" id="circuits-controls">
+            <h3>Inputs</h3>
+            <div class="control-row">
+              <label class="control-label">A</label>
+              <div class="btn-group">
+                <button class="input-btn active" data-cinput="A" data-val="0">0</button>
+                <button class="input-btn" data-cinput="A" data-val="1">1</button>
+              </div>
+            </div>
+            <div class="control-row">
+              <label class="control-label">B</label>
+              <div class="btn-group">
+                <button class="input-btn active" data-cinput="B" data-val="0">0</button>
+                <button class="input-btn" data-cinput="B" data-val="1">1</button>
+              </div>
+            </div>
+            <div class="control-row" id="cin-row">
+              <label class="control-label">Cin</label>
+              <div class="btn-group">
+                <button class="input-btn active" data-cinput="Cin" data-val="0">0</button>
+                <button class="input-btn" data-cinput="Cin" data-val="1">1</button>
+              </div>
+            </div>
+            <div class="control-row" id="sel-row" style="display:none">
+              <label class="control-label">Sel</label>
+              <div class="btn-group">
+                <button class="input-btn active" data-cinput="Sel" data-val="0">0</button>
+                <button class="input-btn" data-cinput="Sel" data-val="1">1</button>
+              </div>
+            </div>
+          </div>
+          <div class="control-card" id="circuits-output-card">
+            <h3>Output</h3>
+            <div id="circuits-output" class="output-display"></div>
+          </div>
+          <div class="control-card">
+            <button id="circuits-compute" class="action-btn primary-btn">▶ Compute</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layer 5: CPU Components -->
+    <section id="layer-5" class="layer-section" data-layer="5">
+      <div class="layer-layout">
+        <div class="layer-canvas-area">
+          <div class="canvas-label">4-bit ALU + Register File</div>
+          <svg id="cpu-svg" viewBox="0 0 820 480" preserveAspectRatio="xMidYMid meet" style="flex:1"></svg>
+        </div>
+        <div class="layer-controls-area">
+          <div class="control-card" id="cpu-registers">
+            <h3>Registers (4-bit)</h3>
+            <div id="reg-display"></div>
+          </div>
+          <div class="control-card" id="cpu-op-card">
+            <h3>Operation</h3>
+            <div class="btn-group vertical">
+              <button class="op-btn active" data-op="ADD">ADD</button>
+              <button class="op-btn" data-op="AND">AND</button>
+              <button class="op-btn" data-op="OR">OR</button>
+            </div>
+          </div>
+          <div class="control-card">
+            <button id="cpu-run" class="action-btn primary-btn">▶ Run ALU</button>
+          </div>
+          <div class="control-card" id="cpu-result-card" style="display:none">
+            <h3>Result</h3>
+            <div id="cpu-result" class="output-display"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Layer 6: Instruction Execution -->
+    <section id="layer-6" class="layer-section" data-layer="6">
+      <div class="layer-layout">
+        <div class="layer-canvas-area">
+          <div class="canvas-label">Instruction Pipeline: <code>ADD R0, R1, R2</code></div>
+          <div id="pipeline-track" class="pipeline-track">
+            <div class="pipeline-stage" id="ps-fetch"><span class="ps-num">1–3</span><span class="ps-label">Fetch</span></div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" id="ps-decode"><span class="ps-num">4–6</span><span class="ps-label">Decode</span></div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" id="ps-execute"><span class="ps-num">7–9</span><span class="ps-label">Execute</span></div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-stage" id="ps-writeback"><span class="ps-num">10–12</span><span class="ps-label">Writeback</span></div>
+          </div>
+          <svg id="execution-svg" viewBox="0 0 820 400" preserveAspectRatio="xMidYMid meet" style="flex:1"></svg>
+        </div>
+        <div class="layer-controls-area">
+          <div class="control-card" id="exec-controls">
+            <h3>Instruction</h3>
+            <div class="control-row">
+              <label class="control-label">Op</label>
+              <div class="btn-group vertical">
+                <button class="op-btn active" data-execop="ADD">ADD</button>
+                <button class="op-btn" data-execop="AND">AND</button>
+                <button class="op-btn" data-execop="OR">OR</button>
+              </div>
+            </div>
+            <div class="control-row">
+              <label class="control-label">R1 =</label>
+              <input type="number" id="exec-r1" min="0" max="15" value="5" class="num-input">
+            </div>
+            <div class="control-row">
+              <label class="control-label">R2 =</label>
+              <input type="number" id="exec-r2" min="0" max="15" value="2" class="num-input">
+            </div>
+            <button id="exec-reset" class="action-btn" style="margin-top:8px">↺ Reset</button>
+          </div>
+          <div class="control-card" id="exec-result-card" style="display:none">
+            <h3>Result</h3>
+            <div id="exec-result" class="output-display"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Step Footer -->
+  <footer id="step-footer">
+    <div class="step-bar">
+      <button id="btn-prev-layer" class="step-btn step-btn--layer" title="Previous Layer">⟨⟨ Layer</button>
+      <button id="btn-prev-step" class="step-btn" title="Previous Step (←)">‹ Prev</button>
+      <div class="step-indicator">
+        <span id="step-current">1</span><span class="step-sep">/</span><span id="step-total">1</span>
+      </div>
+      <button id="btn-next-step" class="step-btn step-btn--primary" title="Next Step (→)">Next ›</button>
+      <button id="btn-next-layer" class="step-btn step-btn--layer" title="Next Layer">Layer ⟩⟩</button>
+      <button id="btn-auto-play" class="step-btn step-btn--play" title="Auto Play (Space)">▶ Play</button>
+    </div>
+    <div id="info-panel" class="info-panel">
+      <div class="info-panel-icon">ℹ</div>
+      <div id="info-text" class="info-text">Welcome! Use the layer navigation above or press Next to begin exploring computing from silicon to software.</div>
+    </div>
+  </footer>
+
+  <!-- Transition Overlay -->
+  <div id="transition-overlay" class="transition-overlay hidden">
+    <div class="transition-zoom-ring"></div>
+    <div class="transition-label" id="transition-label"></div>
+  </div>
+
+</div><!-- /#app -->
+
+<script src="utils.js"></script>
+<script src="simulator.js"></script>
+<script src="layer1-physics.js"></script>
+<script src="layer2-transistor.js"></script>
+<script src="layer3-gates.js"></script>
+<script src="layer4-circuits.js"></script>
+<script src="layer5-cpu.js"></script>
+<script src="layer6-execution.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

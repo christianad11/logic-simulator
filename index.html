@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logic Circuit Simulator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Logic Circuit Simulator</h1>
+      <p class="subtitle">Boolean Expression Analyzer &amp; Minimizer</p>
+    </header>
+
+    <!-- ── Tab strip ── -->
+    <div class="tab-strip">
+      <button class="tab active" data-tab="expression">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+        Expression
+      </button>
+      <button class="tab" data-tab="circuit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="6" height="8" rx="1"/><rect x="16" y="8" width="6" height="8" rx="1"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Circuit Builder
+      </button>
+    </div>
+
+    <!-- ── Expression pane ── -->
+    <section id="pane-expression" class="tab-pane card active">
+      <div class="input-row">
+        <input type="text" id="expr-input" placeholder="e.g. (A &amp; B) | (~A &amp; C)" spellcheck="false" autocomplete="off" />
+        <button id="compute-btn">Compute</button>
+        <button id="clear-btn" class="secondary">Clear</button>
+      </div>
+      <div class="operator-hints">
+        <span>Operators:</span>
+        <kbd>&amp;</kbd> AND &nbsp;
+        <kbd>|</kbd> OR &nbsp;
+        <kbd>~</kbd> NOT &nbsp;
+        <kbd>^</kbd> XOR &nbsp;
+        <kbd>()</kbd> Grouping
+      </div>
+      <div class="examples">
+        <span>Examples:</span>
+        <button class="example-btn" data-expr="A & B">A &amp; B</button>
+        <button class="example-btn" data-expr="(A | B) & ~C">(A | B) &amp; ~C</button>
+        <button class="example-btn" data-expr="A ^ B ^ C">A ^ B ^ C</button>
+        <button class="example-btn" data-expr="(A & B) | (~A & C) | (B & C)">(A&amp;B)|(~A&amp;C)|(B&amp;C)</button>
+        <button class="example-btn" data-expr="(A | ~B) & (C | D)">(A|~B)&amp;(C|D)</button>
+      </div>
+      <div id="error-msg" class="error hidden"></div>
+    </section>
+
+    <!-- ── Circuit Builder pane ── -->
+    <section id="pane-circuit" class="tab-pane card hidden">
+      <div class="circuit-layout">
+
+        <!-- Palette -->
+        <div class="gate-palette">
+          <div class="palette-label">I/O</div>
+          <button class="gate-palette-btn" data-gate="INPUT"  style="--gc:#6c63ff">INPUT</button>
+          <button class="gate-palette-btn" data-gate="OUTPUT" style="--gc:#ff6584">OUTPUT</button>
+          <div class="palette-label" style="margin-top:10px">Gates</div>
+          <button class="gate-palette-btn" data-gate="AND"  style="--gc:#43e97b">AND</button>
+          <button class="gate-palette-btn" data-gate="OR"   style="--gc:#98d843">OR</button>
+          <button class="gate-palette-btn" data-gate="NOT"  style="--gc:#e943e9">NOT</button>
+          <button class="gate-palette-btn" data-gate="XOR"  style="--gc:#43b0e9">XOR</button>
+          <button class="gate-palette-btn" data-gate="NAND" style="--gc:#e9e943">NAND</button>
+          <button class="gate-palette-btn" data-gate="NOR"  style="--gc:#e97b43">NOR</button>
+          <button class="gate-palette-btn" data-gate="XNOR" style="--gc:#43e9e9">XNOR</button>
+          <div class="palette-divider"></div>
+          <div class="palette-hint">Click to add</div>
+          <div class="palette-hint">Drag to move</div>
+          <div class="palette-hint">Right-click delete</div>
+          <div class="palette-hint">Click INPUT to toggle sim</div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="circuit-canvas-wrap">
+          <canvas id="circuit-canvas"></canvas>
+          <div id="circuit-status" class="circuit-status"></div>
+        </div>
+      </div>
+
+      <div class="circuit-actions">
+        <button id="analyze-circuit-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Analyze Circuit
+        </button>
+        <button id="clear-circuit-btn" class="secondary">Clear Canvas</button>
+        <span class="circuit-hint-text">Esc = cancel wire &nbsp;·&nbsp; Right-click = delete</span>
+      </div>
+      <div id="circuit-error" class="error hidden"></div>
+    </section>
+
+    <!-- ── Results (shared) ── -->
+    <div id="results" class="hidden">
+
+      <section class="card">
+        <h2>Truth Table</h2>
+        <div class="table-controls">
+          <button id="export-csv-btn" class="secondary small">Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <table id="truth-table"></table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Karnaugh Map</h2>
+        <div id="kmap-container"></div>
+        <div id="kmap-legend" class="kmap-legend hidden">
+          <span class="legend-item sop-color">■ SOP groups (1s)</span>
+          <span class="legend-item pos-color">■ POS groups (0s)</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Minimized Expressions</h2>
+        <div class="results-grid">
+          <div class="result-box sop-box">
+            <h3>SOP <span class="tag">Sum of Products</span></h3>
+            <div id="sop-result" class="formula"></div>
+            <button class="copy-btn" data-target="sop-result">Copy</button>
+          </div>
+          <div class="result-box pos-box">
+            <h3>POS <span class="tag">Product of Sums</span></h3>
+            <div id="pos-result" class="formula"></div>
+            <button class="copy-btn" data-target="pos-result">Copy</button>
+          </div>
+        </div>
+        <div class="minterms-section">
+          <div><strong>Minterms (F=1):</strong> <span id="minterms-list" class="mono"></span></div>
+          <div><strong>Maxterms (F=0):</strong> <span id="maxterms-list" class="mono"></span></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="logic.js"></script>
+  <script src="kmap.js"></script>
+  <script src="circuit.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
