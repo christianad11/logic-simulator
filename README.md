@@ -137,6 +137,22 @@ logic-circuit-simulator/
 
 ---
 
+### Expanded simple circuit builder
+
+The root-level Circuit Builder now uses a 3200 × 2000 scrollable workspace
+and a wider layout. Scroll horizontally and vertically to reach more space;
+new gates appear at the center of the visible area.
+
+The palette includes **Half Adder** (A, B → S, C) and **Full Adder**
+(A, B, Cin → S, Cout). Each output can be wired independently, including
+connecting Carry to the next adder's Cin. Click INPUT bodies to cycle
+unknown → 0 → 1. Add OUTPUT blocks to observe Sum and Carry.
+Analyze Circuit continues to analyze the first OUTPUT block, including the
+selected adder output's expression.
+
+Run the circuit regression checks with `node tests/circuit.test.cjs`.
+The `full-simulator/` implementation is unchanged.
+
 ## Concepts Covered
 
 This project touches on topics from three courses:
@@ -166,3 +182,5 @@ This project touches on topics from three courses:
 ## License
 
 MIT — free to use, modify, and share.
+
+

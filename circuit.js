@@ -9,6 +9,8 @@ const GATE_DEF = {
   XOR:    { inputs: 2, label: 'XOR',  color: '#43b0e9' },
   NAND:   { inputs: 2, label: 'NAND', color: '#e9e943' },
   NOR:    { inputs: 2, label: 'NOR',  color: '#e97b43' },
+  HALF_ADDER: { inputs: 2, label: 'HA', color: '#f5b942', inputLabels: ['A', 'B'], outputLabels: ['S', 'C'] },
+  FULL_ADDER: { inputs: 3, label: 'FA', color: '#b58cff', inputLabels: ['A', 'B', 'Cin'], outputLabels: ['S', 'Cout'] },
   XNOR:   { inputs: 2, label: 'XNOR', color: '#43e9e9' },
 };
 
@@ -19,7 +21,7 @@ const SNAP = 20;   // grid snap
 
 function gateH(type) {
   const n = GATE_DEF[type].inputs;
-  return n === 0 ? 40 : n === 1 ? 48 : 64;
+  return GATE_DEF[type].outputLabels ? 100 : n === 0 ? 40 : n === 1 ? 48 : 64;
 }
 
 // ── State ──────────────────────────────────────────────────────────────────
@@ -45,8 +47,8 @@ const CB = {
 
 function cbAddGate(type) {
   const canvas = CB.canvas;
-  const cx = Math.round((canvas.width  / 2 - GW / 2)        / SNAP) * SNAP;
-  const cy = Math.round((canvas.height / 2 - gateH(type)/2) / SNAP) * SNAP;
+  const cx = Math.round(((canvas.parentElement.scrollLeft + canvas.parentElement.clientWidth / 2) - GW / 2)        / SNAP) * SNAP;
+  const cy = Math.round(((canvas.parentElement.scrollTop + canvas.parentElement.clientHeight / 2) - gateH(type)/2) / SNAP) * SNAP;
   const gate = { id: CB.nextId++, type, x: cx, y: cy };
   if (type === 'INPUT') {
     gate.varName  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[CB.nextVar % 26];
@@ -66,12 +68,11 @@ function cbDeleteGate(id) {
   cbRender();
 }
 
-function cbAddWire(fromId, toId, toPinIdx) {
+function cbAddWire(fromId, toId, toPinIdx, fromPinIdx = 0) {
+  if (fromId === toId) return;
   // One driver per input pin
   CB.wires = CB.wires.filter(w => !(w.toId === toId && w.toPinIdx === toPinIdx));
-  // Prevent self-loops
-  if (fromId === toId) return;
-  CB.wires.push({ id: CB.nextId++, fromId, toId, toPinIdx });
+  CB.wires.push({ id: CB.nextId++, fromId, toId, toPinIdx, fromPinIdx });
   cbEval();
   cbRender();
 }
@@ -90,14 +91,15 @@ function gatePins(gate) {
   const inputs = [];
   if (n === 1) {
     inputs.push({ x: gate.x, y: gate.y + h / 2 });
-  } else if (n === 2) {
-    inputs.push({ x: gate.x, y: gate.y + Math.round(h * 0.33) });
-    inputs.push({ x: gate.x, y: gate.y + Math.round(h * 0.67) });
+  } else {
+    for (let i = 0; i < n; i++)
+      inputs.push({ x: gate.x, y: gate.y + Math.round(h * (i + 1) / (n + 1)) });
   }
-  const output = gate.type !== 'OUTPUT'
-    ? { x: gate.x + GW, y: gate.y + h / 2 }
-    : null;
-  return { inputs, output };
+  const count = GATE_DEF[gate.type].outputLabels?.length || (gate.type === 'OUTPUT' ? 0 : 1);
+  const outputs = Array.from({ length: count }, (_, i) => ({
+    x: gate.x + GW, y: gate.y + h * (i + 1) / (count + 1),
+  }));
+  return { inputs, outputs, output: outputs[0] || null };
 }
 
 // ── Evaluation ─────────────────────────────────────────────────────────────
@@ -106,8 +108,8 @@ function cbEval() {
   CB.evalMap = {};
   const visiting = new Set();
 
-  function ev(gateId) {
-    if (CB.evalMap[gateId] !== undefined) return CB.evalMap[gateId];
+  function ev(gateId, pinIdx = 0) {
+    if (CB.evalMap[gateId] !== undefined) return cbSignal(gateId, pinIdx);
     if (visiting.has(gateId)) { CB.evalMap[gateId] = null; return null; }
     visiting.add(gateId);
 
@@ -125,13 +127,15 @@ function cbEval() {
     for (let i = 0; i < n; i++) {
       const w = CB.wires.find(w => w.toId === gateId && w.toPinIdx === i);
       if (!w) { CB.evalMap[gateId] = null; visiting.delete(gateId); return null; }
-      const v = ev(w.fromId);
+      const v = ev(w.fromId, w.fromPinIdx || 0);
       if (v === null) { CB.evalMap[gateId] = null; visiting.delete(gateId); return null; }
       vals.push(v);
     }
 
     let out;
     switch (gate.type) {
+      case 'HALF_ADDER': out = [vals[0] ^ vals[1], vals[0] & vals[1]]; break;
+      case 'FULL_ADDER': out = [vals[0] ^ vals[1] ^ vals[2], (vals[0] & vals[1]) | (vals[2] & (vals[0] ^ vals[1]))]; break;
       case 'OUTPUT': out = vals[0]; break;
       case 'NOT':    out = vals[0] ? 0 : 1; break;
       case 'AND':    out = vals[0] & vals[1]; break;
@@ -144,10 +148,15 @@ function cbEval() {
     }
     CB.evalMap[gateId] = out;
     visiting.delete(gateId);
-    return out;
+    return cbSignal(gateId, pinIdx);
   }
 
   for (const g of CB.gates) ev(g.id);
+}
+
+function cbSignal(gateId, pinIdx = 0) {
+  const value = CB.evalMap[gateId];
+  return Array.isArray(value) ? value[pinIdx] : value;
 }
 
 // ── Expression extraction ──────────────────────────────────────────────────
@@ -157,7 +166,7 @@ function cbExtractExpression() {
   if (!out) throw new Error('No OUTPUT gate. Add one to your circuit.');
 
   const seen = new Set();
-  function expr(gateId) {
+  function expr(gateId, pinIdx = 0) {
     if (seen.has(gateId)) throw new Error('Cycle detected in circuit.');
     seen.add(gateId);
     const gate = CB.gates.find(g => g.id === gateId);
@@ -170,11 +179,15 @@ function cbExtractExpression() {
     for (let i = 0; i < n; i++) {
       const w = CB.wires.find(w => w.toId === gateId && w.toPinIdx === i);
       if (!w) throw new Error(`"${GATE_DEF[gate.type].label}" gate has unconnected input ${i + 1}.`);
-      sub.push(expr(w.fromId));
+      sub.push(expr(w.fromId, w.fromPinIdx || 0));
     }
     seen.delete(gateId);
 
     switch (gate.type) {
+      case 'HALF_ADDER': return pinIdx === 0 ? `(${sub[0]} ^ ${sub[1]})` : `(${sub[0]} & ${sub[1]})`;
+      case 'FULL_ADDER': return pinIdx === 0
+        ? `(${sub[0]} ^ ${sub[1]} ^ ${sub[2]})`
+        : `((${sub[0]} & ${sub[1]}) | (${sub[2]} & (${sub[0]} ^ ${sub[1]})))`;
       case 'OUTPUT': return sub[0];
       case 'NOT':    return `~${sub[0]}`;
       case 'AND':    return `(${sub[0]} & ${sub[1]})`;
@@ -230,11 +243,11 @@ function drawWire(ctx, wire) {
   const fg = CB.gates.find(g => g.id === wire.fromId);
   const tg = CB.gates.find(g => g.id === wire.toId);
   if (!fg || !tg) return;
-  const fp = gatePins(fg).output;
+  const fp = gatePins(fg).outputs[wire.fromPinIdx || 0];
   const tp = gatePins(tg).inputs[wire.toPinIdx];
   if (!fp || !tp) return;
 
-  const val = CB.evalMap[wire.fromId];
+  const val = cbSignal(wire.fromId, wire.fromPinIdx || 0);
   const col = sigColor(val);
   const cpx = (fp.x + tp.x) / 2;
 
@@ -254,7 +267,7 @@ function drawPendingWire(ctx) {
   const gate = CB.gates.find(g => g.id === wiring.gateId);
   if (!gate) return;
   const pins = gatePins(gate);
-  const src = wiring.type === 'output' ? pins.output : pins.inputs[wiring.idx];
+  const src = wiring.type === 'output' ? pins.outputs[wiring.idx || 0] : pins.inputs[wiring.idx];
   if (!src) return;
 
   const cpx = (src.x + mouseX) / 2;
@@ -314,19 +327,24 @@ function drawGate(ctx, gate) {
     }
   }
 
-  // Input pins
-  for (const p of pins.inputs) {
-    const connected = CB.wires.some(w => w.toId === gate.id && CB.gates.find(g => g.id === w.fromId) &&
-      gatePins(CB.gates.find(g => g.id === w.fromId)).output &&
-      Math.abs(gatePins(CB.gates.find(g => g.id === w.fromId)).output.x - p.x) < 50);
+  // Named adder pins make Sum and Carry connections unambiguous.
+  ctx.font = '10px Consolas, monospace';
+  pins.inputs.forEach((p, i) => {
     drawPin(ctx, p, '#3a4070');
-  }
-
-  // Output pin
-  if (pins.output) {
-    const ov = CB.evalMap[gate.id];
-    drawPin(ctx, pins.output, sigColor(ov));
-  }
+    if (GATE_DEF[gate.type].inputLabels) {
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#e8eaf6';
+      ctx.fillText(GATE_DEF[gate.type].inputLabels[i], p.x + 10, p.y);
+    }
+  });
+  pins.outputs.forEach((p, i) => {
+    drawPin(ctx, p, sigColor(cbSignal(gate.id, i)));
+    if (GATE_DEF[gate.type].outputLabels) {
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#e8eaf6';
+      ctx.fillText(GATE_DEF[gate.type].outputLabels[i], p.x - 10, p.y);
+    }
+  });
 }
 
 function drawPin(ctx, pos, fill) {
@@ -362,13 +380,15 @@ function getGateAt(x, y) {
 
 function getPinAt(x, y) {
   for (const gate of CB.gates) {
-    const { inputs, output } = gatePins(gate);
+    const { inputs, outputs } = gatePins(gate);
     for (let i = 0; i < inputs.length; i++) {
       if (Math.hypot(x - inputs[i].x, y - inputs[i].y) <= PHP)
         return { gateId: gate.id, type: 'input', idx: i };
     }
-    if (output && Math.hypot(x - output.x, y - output.y) <= PHP)
-      return { gateId: gate.id, type: 'output' };
+    for (let i = 0; i < outputs.length; i++) {
+      if (Math.hypot(x - outputs[i].x, y - outputs[i].y) <= PHP)
+        return { gateId: gate.id, type: 'output', idx: i };
+    }
   }
   return null;
 }
@@ -378,7 +398,7 @@ function getWireAt(x, y) {
     const fg = CB.gates.find(g => g.id === wire.fromId);
     const tg = CB.gates.find(g => g.id === wire.toId);
     if (!fg || !tg) continue;
-    const fp = gatePins(fg).output;
+    const fp = gatePins(fg).outputs[wire.fromPinIdx || 0];
     const tp = gatePins(tg).inputs[wire.toPinIdx];
     if (!fp || !tp) continue;
     const cpx = (fp.x + tp.x) / 2;
@@ -425,9 +445,9 @@ function onCBMouseDown(e) {
     if (CB.wiring) {
       const from = CB.wiring;
       if (from.type === 'output' && pin.type === 'input')
-        cbAddWire(from.gateId, pin.gateId, pin.idx);
+        cbAddWire(from.gateId, pin.gateId, pin.idx, from.idx || 0);
       else if (from.type === 'input' && pin.type === 'output')
-        cbAddWire(pin.gateId, from.gateId, from.idx);
+        cbAddWire(pin.gateId, from.gateId, from.idx, pin.idx || 0);
       CB.wiring = null;
     } else {
       CB.wiring = pin;
@@ -453,8 +473,8 @@ function onCBMouseMove(e) {
   if (CB.dragging) {
     const gate = CB.gates.find(g => g.id === CB.dragging.id);
     if (gate) {
-      gate.x = Math.round((x - CB.dragging.dx) / SNAP) * SNAP;
-      gate.y = Math.round((y - CB.dragging.dy) / SNAP) * SNAP;
+      gate.x = Math.max(SNAP, Math.min(CB.canvas.width - GW - SNAP, Math.round((x - CB.dragging.dx) / SNAP) * SNAP));
+      gate.y = Math.max(SNAP, Math.min(CB.canvas.height - gateH(gate.type) - SNAP, Math.round((y - CB.dragging.dy) / SNAP) * SNAP));
       cbEval();
     }
   }
@@ -515,18 +535,13 @@ function initCircuitBuilder() {
   CB.canvas = canvas;
   CB.ctx    = canvas.getContext('2d');
 
-  function resize() {
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width  = rect.width;
-    canvas.height = Math.max(rect.height, 420);
-    cbRender();
-  }
-  resize();
-  window.addEventListener('resize', resize);
+  canvas.width = 3200;
+  canvas.height = 2000;
+
 
   canvas.addEventListener('mousedown',   onCBMouseDown);
   canvas.addEventListener('mousemove',   onCBMouseMove);
-  canvas.addEventListener('mouseup',     onCBMouseUp);
+  window.addEventListener('mouseup',     onCBMouseUp);
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
   document.addEventListener('keydown', e => {
@@ -554,6 +569,7 @@ function initCircuitBuilder() {
   // Clear
   document.getElementById('clear-circuit-btn').addEventListener('click', () => {
     CB.gates = []; CB.wires = []; CB.nextVar = 0; CB.evalMap = {};
+    CB.wiring = null; CB.dragging = null; CB.clickStart = null;
     showCircuitError(null);
     cbRender();
   });

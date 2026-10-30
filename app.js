@@ -14,18 +14,8 @@ function switchTab(name) {
   document.querySelectorAll('.tab-pane').forEach(p =>
     p.classList.toggle('hidden', p.id !== `pane-${name}`));
 
-  if (name === 'circuit') {
-    // Give the pane time to become visible before resizing canvas
-    setTimeout(() => {
-      const canvas = document.getElementById('circuit-canvas');
-      if (canvas) {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width  = rect.width;
-        canvas.height = Math.max(rect.height, 420);
-        cbRender();
-      }
-    }, 30);
-  }
+  document.querySelector('.app').classList.toggle('circuit-mode', name === 'circuit');
+  if (name === 'circuit') cbRender();
 }
 
 document.querySelectorAll('.tab').forEach(btn => {

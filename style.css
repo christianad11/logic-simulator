@@ -473,3 +473,13 @@ tr:hover td { background: var(--surface2); }
   color: var(--text2);
   margin-left: auto;
 }
+
+/* Large, scrollable workspace; expression view retains its compact width. */
+.app.circuit-mode { max-width: 1800px; }
+.circuit-layout { height: max(540px, 72vh); }
+.circuit-canvas-wrap { min-width: 0; overflow: auto; background: #0b0d16; }
+#circuit-canvas { width: 3200px; height: 2000px; }
+.circuit-status {
+  position: static; transform: none; display: block; margin-top: 10px;
+  white-space: normal; border-radius: 8px;
+}
