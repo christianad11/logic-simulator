@@ -68,6 +68,9 @@
           <button class="gate-palette-btn" data-gate="NAND" style="--gc:#e9e943">NAND</button>
           <button class="gate-palette-btn" data-gate="NOR"  style="--gc:#e97b43">NOR</button>
           <button class="gate-palette-btn" data-gate="XNOR" style="--gc:#43e9e9">XNOR</button>
+          <div class="palette-label">Adders</div>
+          <button class="gate-palette-btn" data-gate="HALF_ADDER" style="--gc:#f5b942" title="A + B → Sum, Carry">Half Adder</button>
+          <button class="gate-palette-btn" data-gate="FULL_ADDER" style="--gc:#b58cff" title="A + B + Cin → Sum, Carry out">Full Adder</button>
           <div class="palette-divider"></div>
           <div class="palette-hint">Click to add</div>
           <div class="palette-hint">Drag to move</div>
@@ -78,17 +81,18 @@
         <!-- Canvas -->
         <div class="circuit-canvas-wrap">
           <canvas id="circuit-canvas"></canvas>
-          <div id="circuit-status" class="circuit-status"></div>
+
         </div>
       </div>
 
+      <div id="circuit-status" class="circuit-status" aria-live="polite"></div>
       <div class="circuit-actions">
         <button id="analyze-circuit-btn">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           Analyze Circuit
         </button>
         <button id="clear-circuit-btn" class="secondary">Clear Canvas</button>
-        <span class="circuit-hint-text">Esc = cancel wire &nbsp;·&nbsp; Right-click = delete</span>
+        <span class="circuit-hint-text">Scroll to explore 3200 × 2000 workspace &nbsp;·&nbsp; Esc = cancel wire &nbsp;·&nbsp; Right-click = delete</span>
       </div>
       <div id="circuit-error" class="error hidden"></div>
     </section>
